@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Uno Tally</title>
+<meta name="theme-color" content="#f2f4f8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🃏</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f4f8; --surface:#fff; --ink:#1b1d26; --muted:#6a6f80; --line:#dde1ea; --accent:#D9272E;
+  --display:'Bagel Fat One','Arial Rounded MT Bold',system-ui,sans-serif;
+  --body:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#14151c;--surface:#1f212b;--ink:#f1f2f7;--muted:#9a9fb2;--line:#2f3240;color-scheme:dark}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;
+  padding:env(safe-area-inset-top,0) 0 0;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #1F6FD0;outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:14px 16px 130px}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 14px}
+.logo{font-family:var(--display);font-size:1.7rem;color:#fff;background:var(--accent);padding:2px 16px 4px;
+  border-radius:50%/60%;transform:rotate(-4deg);box-shadow:0 3px 0 rgba(0,0,0,.25);letter-spacing:.5px}
+.hbtns{display:flex;gap:8px}
+.chip{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600}
+.chip:active{transform:scale(.97)}
+.chip.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* scoreboard */
+.status{margin:0 0 14px;color:var(--muted);font-weight:500}
+.banner{background:var(--ink);color:var(--bg);border-radius:16px;padding:12px 16px;margin-bottom:16px;font-weight:600}
+.status{margin:0 0 12px}
+
+/* rounds table */
+h2{font-family:var(--display);font-weight:400;font-size:1.4rem;margin:0 0 10px}
+.tablewrap{overflow-x:auto;background:var(--surface);border-radius:16px;border:1px solid var(--line)}
+table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
+th,td{padding:12px 6px;text-align:center;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line);min-width:54px;background:var(--surface)}
+tr:last-child th,tr:last-child td{border-bottom:0}
+thead th{font-size:.8rem;font-weight:600;padding:6px 4px}
+.c1,.c2{position:sticky;z-index:2}
+.c1{left:0;width:96px;min-width:96px;max-width:96px;text-align:left;padding-left:10px}
+.c2{left:96px;width:72px;min-width:72px;font-family:var(--display);font-weight:400;font-size:1.6rem;
+  box-shadow:6px 0 8px -6px rgba(0,0,0,.35);background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
+.c2.over{box-shadow:inset 0 0 0 3px var(--ink),6px 0 8px -6px rgba(0,0,0,.35)}
+th.c2{font-family:var(--body);font-size:.8rem;font-weight:700}
+td.c1{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbtn{border:0;background:none;font-weight:700;padding:6px 8px;border-radius:8px}
+.empty{padding:26px 16px;text-align:center;color:var(--muted)}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));
+  background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.add{display:block;width:100%;max-width:728px;margin:0 auto;border:0;border-radius:18px;padding:16px;
+  font-family:var(--display);font-size:1.35rem;background:var(--accent);color:#fff;box-shadow:0 5px 0 #8f1318}
+.add:active{transform:translateY(3px);box-shadow:0 2px 0 #8f1318}
+
+/* dialogs */
+dialog{border:0;border-radius:22px;padding:0;width:min(440px,calc(100% - 24px));max-height:calc(100% - 24px);
+  background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,10,20,.55)}
+.dlg{padding:20px;display:flex;flex-direction:column;gap:12px}
+.dlg h3{font-family:var(--display);font-weight:400;font-size:1.5rem;margin:0}
+.dlg p{margin:0;color:var(--muted);font-size:.92rem}
+.row{display:flex;align-items:center;gap:10px}
+.sw{width:14px;height:34px;border-radius:7px;flex:none}
+.row input[type=text],.row input[type=number],.field input,.field select{flex:1;min-width:0;border:2px solid var(--line);
+  background:var(--bg);border-radius:12px;padding:10px 12px}
+.row input[type=number]{text-align:right;font-size:1.2rem;font-weight:600}
+.won.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.won{border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:8px 10px;font-weight:600;font-size:.85rem}
+.row input[readonly]{opacity:.75;border-style:dashed}
+.x.arm{color:#c4161d;font-weight:700;font-size:.9rem}
+.btn.danger.arm{background:#c4161d;border-color:#c4161d;color:#fff}
+.x{border:0;background:none;font-size:1.3rem;color:var(--muted);padding:4px 8px}
+.field{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.9rem}
+.actions{display:flex;gap:10px;margin-top:4px}
+.btn{flex:1;border:2px solid var(--line);background:var(--bg);border-radius:14px;padding:12px;font-weight:700}
+.btn.go{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:#c4161d;flex:0 0 auto}
+.list{display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:55vh}
+.game{display:flex;align-items:center;gap:8px;border:2px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--bg)}
+.game.cur{border-color:var(--accent)}
+.game .open{flex:1;border:0;background:none;text-align:left;min-width:0}
+.game b{display:block}
+.game small{color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">UNO tally</div>
+    <div class="hbtns">
+      <button class="chip" id="gamesBtn">Games</button>
+      <button class="chip primary" id="newBtn">New game</button>
+    </div>
+  </header>
+  <main id="app"></main>
+</div>
+<div class="bar" id="bar"><button class="add" id="addBtn">Add round</button></div>
+
+<dialog id="roundDlg"></dialog>
+<dialog id="newDlg"></dialog>
+<dialog id="gamesDlg"></dialog>
+
+<script>
+const KEY = 'unoTally.v1';
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+// [card color, text on card, text on white oval]
+const COLORS = [
+  ['#D9272E', '#fff', '#D9272E'], ['#F6C400', '#2b2300', '#A87F00'],
+  ['#1E9B4B', '#fff', '#16793A'], ['#1F6FD0', '#fff', '#1F6FD0'],
+  ['#F28C28', '#2b1600', '#B85A00'], ['#8E4FC9', '#fff', '#8E4FC9'],
+  ['#14A3A3', '#fff', '#0E7C7C'], ['#E5478F', '#fff', '#C42C73']
+];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const col = i => COLORS[i % COLORS.length];
+
+function prune(d) {
+  const cut = Date.now() - WEEK;
+  d.sessions = d.sessions.filter(s => s && s.updated >= cut);
+  d.sessions.sort((a, b) => b.updated - a.updated);
+  if (!d.sessions.some(s => s.id === d.currentId)) d.currentId = d.sessions[0] ? d.sessions[0].id : null;
+  return d;
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.sessions)) return prune(d);
+  } catch (e) {}
+  return { sessions: [], currentId: null };
+}
+let db = load();
+function save() {
+  prune(db);
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
+}
+const cur = () => db.sessions.find(s => s.id === db.currentId) || null;
+const totals = s => s.players.map((_, i) => s.rounds.reduce((a, r) => a + (r[i] || 0), 0));
+
+function standing(s) {
+  const t = totals(s);
+  const best = s.mode === 'low' ? Math.min(...t) : Math.max(...t);
+  const leaders = s.rounds.length ? t.map((v, i) => v === best ? i : -1).filter(i => i >= 0) : [];
+  const over = s.target > 0 && t.some(v => v >= s.target);
+  return { t, leaders, over };
+}
+
+let lastKey = '';
+function render() {
+  const s = cur();
+  const app = $('app');
+  $('bar').style.display = s ? '' : 'none';
+  if (!s) {
+    app.innerHTML = '<div class="empty"><p>No game yet. Start one and add your players.</p></div>';
+    openNew();
+    return;
+  }
+  const { t, leaders, over } = standing(s);
+  const winnerNames = leaders.map(i => esc(s.players[i])).join(' & ');
+  let html = '';
+  if (over) html += `<div class="banner">Game over — ${winnerNames} ${leaders.length > 1 ? 'tie' : 'wins'}! Someone reached ${s.target} points.</div>`;
+  else html += `<p class="status">Round ${s.rounds.length + 1} next · ${s.mode === 'low' ? 'lowest score wins' : 'highest score wins'}${s.target ? ' · target ' + s.target : ''}</p>`;
+
+  
+  const order = s.players.map((_, i) => i).sort((x, y) => (s.mode === 'low' ? t[x] - t[y] : t[y] - t[x]) || x - y);
+  html += '<div class="tablewrap"><table><thead><tr><th class="c1"></th><th class="c2">Total</th>' +
+    s.rounds.map((_, r) => `<th><button class="rbtn" data-edit="${r}" aria-label="Edit round ${r + 1}">R${r + 1}</button></th>`).join('') +
+    '</tr></thead><tbody>' +
+    order.map(i => { const p = s.players[i]; return `<tr><td class="c1" style="background:${col(i)[0]};color:${col(i)[1]}">${leaders.includes(i) ? '👑 ' : ''}${esc(p)}</td>` +
+      `<td class="c2${s.target > 0 && t[i] >= s.target ? ' over' : ''}">${t[i]}</td>` +
+      s.rounds.map(r => `<td>${r[i] || 0}</td>`).join('') + '</tr>'; }).join('') +
+    '</tbody></table></div>';
+  if (!s.rounds.length) html += '<p class="empty">Play a round, then tap “Add round” to log everyone’s points.</p>';
+  const oldTw = app.querySelector('.tablewrap');
+  const oldLeft = oldTw ? oldTw.scrollLeft : 0;
+  const key = s.id + ':' + s.rounds.length;
+  app.innerHTML = html;
+  const tw = app.querySelector('.tablewrap');
+  tw.scrollLeft = key === lastKey ? oldLeft : tw.scrollWidth; // jump to newest round
+  lastKey = key;
+  app.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openRound(+b.dataset.edit));
+}
+
+/* ---------- round dialog ---------- */
+function openRound(idx) {
+  const s = cur(); if (!s) return;
+  const editing = idx !== undefined;
+  const vals = editing ? s.rounds[idx] : [];
+  const d = $('roundDlg');
+  d.innerHTML = `<div class="dlg">
+    <h3>${editing ? 'Edit round ' + (idx + 1) : 'Round ' + (s.rounds.length + 1)}</h3>
+    <p>Enter each player’s points. Tap “Won” on the round winner and their points are added up automatically from the others.</p>
+    ${s.players.map((p, i) => `<div class="row">
+      <span class="sw" style="background:${col(i)[0]}"></span>
+      <label for="r${i}" style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p)}</label>
+      <button class="won" data-won="${i}" type="button">Won</button>
+      <input id="r${i}" type="number" inputmode="numeric" placeholder="0" value="${vals[i] || ''}" style="max-width:96px;flex:none">
+    </div>`).join('')}
+    <div class="actions">
+      ${editing ? '<button class="btn danger" id="delRound" type="button">Delete</button>' : ''}
+      <button class="btn" id="cancelRound" type="button">Cancel</button>
+      <button class="btn go" id="saveRound" type="button">Save</button>
+    </div></div>`;
+  const read = i => parseInt($('r' + i).value, 10) || 0;
+  let winner = -1;
+  const sync = () => {
+    if (winner < 0) return;
+    let sum = 0;
+    s.players.forEach((_, i) => { if (i !== winner) sum += read(i); });
+    $('r' + winner).value = sum;
+  };
+  s.players.forEach((_, i) => $('r' + i).addEventListener('input', sync));
+  d.querySelectorAll('[data-won]').forEach(b => b.onclick = () => {
+    const w = +b.dataset.won;
+    const off = winner === w;
+    d.querySelectorAll('[data-won]').forEach(x => x.classList.remove('on'));
+    s.players.forEach((_, i) => $('r' + i).readOnly = false);
+    winner = off ? -1 : w;
+    if (!off) { b.classList.add('on'); $('r' + w).readOnly = true; sync(); }
+  });
+  $('cancelRound').onclick = () => d.close();
+  $('saveRound').onclick = () => {
+    const row = s.players.map((_, i) => read(i));
+    if (editing) s.rounds[idx] = row; else s.rounds.push(row);
+    s.updated = Date.now(); save(); d.close(); render();
+  };
+  if (editing) $('delRound').onclick = e => {
+    const b = e.currentTarget;
+    if (!b.classList.contains('arm')) {
+      b.classList.add('arm'); b.textContent = 'Delete?';
+      setTimeout(() => { if (b.isConnected) { b.classList.remove('arm'); b.textContent = 'Delete'; } }, 3000);
+      return;
+    }
+    s.rounds.splice(idx, 1); s.updated = Date.now(); save(); d.close(); render();
+  };
+  d.showModal();
+  if (!editing) $('r0').focus();
+}
+
+/* ---------- new game dialog ---------- */
+function openNew() {
+  const d = $('newDlg');
+  const prev = cur();
+  let names = ['Player 1', 'Player 2', 'Player 3'];
+  const target = prev ? prev.target : 500;
+  const mode = prev ? prev.mode : 'high';
+  const paint = () => {
+    d.innerHTML = `<div class="dlg">
+      <h3>New game</h3>
+      <p>Games are kept for 7 days.</p>
+      ${names.map((n, i) => `<div class="row">
+        <span class="sw" style="background:${col(i)[0]}"></span>
+        <input type="text" data-n="${i}" value="${esc(n)}" maxlength="20" aria-label="Player ${i + 1} name">
+        ${names.length > 2 ? `<button class="x" data-rm="${i}" type="button" aria-label="Remove player">✕</button>` : ''}
+      </div>`).join('')}
+      ${names.length < 8 ? '<button class="btn" id="addP" type="button">+ Add player</button>' : ''}
+      <div class="row">
+        <label class="field" style="flex:1">Target score<input id="tgt" type="number" inputmode="numeric" value="${target}"></label>
+        <label class="field" style="flex:1">Winner<select id="mode">
+          <option value="high"${mode === 'high' ? ' selected' : ''}>Highest score</option>
+          <option value="low"${mode === 'low' ? ' selected' : ''}>Lowest score</option></select></label>
+      </div>
+      <div class="actions">
+        ${cur() ? '<button class="btn" id="cancelNew" type="button">Cancel</button>' : ''}
+        <button class="btn go" id="startNew" type="button">Start game</button>
+      </div></div>`;
+    d.querySelectorAll('[data-n]').forEach(inp => inp.oninput = () => names[+inp.dataset.n] = inp.value);
+    d.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { names.splice(+b.dataset.rm, 1); paint(); });
+    const a = $('addP'); if (a) a.onclick = () => { names.push('Player ' + (names.length + 1)); paint(); };
+    const c = $('cancelNew'); if (c) c.onclick = () => d.close();
+    $('startNew').onclick = () => {
+      const players = names.map((n, i) => n.trim() || 'Player ' + (i + 1));
+      const now = Date.now();
+      const s = { id: 'g' + now, created: now, updated: now, players, rounds: [],
+        target: Math.max(0, parseInt($('tgt').value, 10) || 0), mode: $('mode').value };
+      db.sessions.unshift(s); db.currentId = s.id; save(); d.close(); render();
+    };
+  };
+  paint();
+  if (!d.open) d.showModal();
+}
+
+/* ---------- games dialog ---------- */
+function openGames() {
+  const d = $('gamesDlg');
+  const fmt = ts => new Date(ts).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  d.innerHTML = `<div class="dlg"><h3>Games</h3><p>Games older than a week are removed automatically.</p>
+    <div class="list">${db.sessions.map(s => {
+      const { t, leaders } = standing(s);
+      const lead = leaders.length ? ' · leading: ' + leaders.map(i => esc(s.players[i])).join(', ') : '';
+      return `<div class="game${s.id === db.currentId ? ' cur' : ''}">
+        <button class="open" data-open="${s.id}"><b>${fmt(s.updated)}</b>
+        <small>${s.players.map(esc).join(', ')}</small>
+        <small>${s.rounds.length} round${s.rounds.length === 1 ? '' : 's'}${lead}</small></button>
+        <button class="x" data-del="${s.id}" aria-label="Delete game">🗑</button></div>`;
+    }).join('') || '<div class="empty">No saved games.</div>'}</div>
+    <div class="actions"><button class="btn" id="closeGames" type="button">Close</button></div></div>`;
+  d.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { db.currentId = b.dataset.open; save(); d.close(); render(); });
+  d.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    if (!b.classList.contains('arm')) {            // first tap: ask to confirm
+      b.classList.add('arm'); b.textContent = 'Delete?';
+      setTimeout(() => { if (b.isConnected) { b.classList.remove('arm'); b.textContent = '🗑'; } }, 3000);
+      return;
+    }
+    db.sessions = db.sessions.filter(g => g.id !== b.dataset.del);
+    save();
+    if (!db.sessions.length) { d.close(); render(); return; }
+    render(); openGames();
+  });
+  $('closeGames').onclick = () => d.close();
+  if (!d.open) d.showModal();
+}
+
+/* close dialogs on backdrop tap */
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d && cur()) d.close(); }));
+$('addBtn').onclick = () => openRound();
+$('newBtn').onclick = openNew;
+$('gamesBtn').onclick = openGames;
+
+save();
+render();
+</script>
+</body>
+</html>
