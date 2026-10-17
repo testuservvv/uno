@@ -153,7 +153,7 @@ const totals = s => s.players.map((_, i) => s.rounds.reduce((a, r) => a + (r[i] 
 
 function standing(s) {
   const t = totals(s);
-  const best = s.mode === 'low' ? Math.min(...t) : Math.max(...t);
+  const best = Math.min(...t);
   const leaders = s.rounds.length ? t.map((v, i) => v === best ? i : -1).filter(i => i >= 0) : [];
   const over = s.target > 0 && t.some(v => v >= s.target);
   return { t, leaders, over };
@@ -162,8 +162,7 @@ function standing(s) {
 let lastKey = '';
 function render() {
   const s = cur();
-  const app = $('app');
-  $('bar').style.display = s ? '' : 'none';
+  const app = $('app');$('bar').style.display = s ? '' : 'none';
   if (!s) {
     app.innerHTML = '<div class="empty"><p>No game yet. Start one and add your players.</p></div>';
     openNew();
@@ -173,10 +172,10 @@ function render() {
   const winnerNames = leaders.map(i => esc(s.players[i])).join(' & ');
   let html = '';
   if (over) html += `<div class="banner">Game over — ${winnerNames} ${leaders.length > 1 ? 'tie' : 'wins'}! Someone reached ${s.target} points.</div>`;
-  else html += `<p class="status">Round ${s.rounds.length + 1} next · ${s.mode === 'low' ? 'lowest score wins' : 'highest score wins'}${s.target ? ' · target ' + s.target : ''}</p>`;
+  else html += `<p class="status">Round ${s.rounds.length + 1} next · lowest score wins${s.target ? ' · target ' + s.target : ''}</p>`;
 
   
-  const order = s.players.map((_, i) => i).sort((x, y) => (s.mode === 'low' ? t[x] - t[y] : t[y] - t[x]) || x - y);
+  const order = s.players.map((_, i) => i).sort((x, y) => (t[x] - t[y]) || x - y);
   html += '<div class="tablewrap"><table><thead><tr><th class="c1"></th><th class="c2">Total</th>' +
     s.rounds.map((_, r) => `<th><button class="rbtn" data-edit="${r}" aria-label="Edit round ${r + 1}">R${r + 1}</button></th>`).join('') +
     '</tr></thead><tbody>' +
@@ -232,8 +231,7 @@ function openRound(idx) {
     winner = off ? -1 : w;
     if (!off) { b.classList.add('on'); $('r' + w).readOnly = true; sync(); }
   });
-  $('cancelRound').onclick = () => d.close();
-  $('saveRound').onclick = () => {
+  $('cancelRound').onclick = () => d.close();$('saveRound').onclick = () => {
     const row = s.players.map((_, i) => read(i));
     if (editing) s.rounds[idx] = row; else s.rounds.push(row);
     s.updated = Date.now(); save(); d.close(); render();
@@ -257,7 +255,6 @@ function openNew() {
   const prev = cur();
   let names = ['Player 1', 'Player 2', 'Player 3'];
   const target = prev ? prev.target : 500;
-  const mode = prev ? prev.mode : 'high';
   const paint = () => {
     d.innerHTML = `<div class="dlg">
       <h3>New game</h3>
@@ -270,9 +267,6 @@ function openNew() {
       ${names.length < 8 ? '<button class="btn" id="addP" type="button">+ Add player</button>' : ''}
       <div class="row">
         <label class="field" style="flex:1">Target score<input id="tgt" type="number" inputmode="numeric" value="${target}"></label>
-        <label class="field" style="flex:1">Winner<select id="mode">
-          <option value="high"${mode === 'high' ? ' selected' : ''}>Highest score</option>
-          <option value="low"${mode === 'low' ? ' selected' : ''}>Lowest score</option></select></label>
       </div>
       <div class="actions">
         ${cur() ? '<button class="btn" id="cancelNew" type="button">Cancel</button>' : ''}
@@ -281,12 +275,11 @@ function openNew() {
     d.querySelectorAll('[data-n]').forEach(inp => inp.oninput = () => names[+inp.dataset.n] = inp.value);
     d.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { names.splice(+b.dataset.rm, 1); paint(); });
     const a = $('addP'); if (a) a.onclick = () => { names.push('Player ' + (names.length + 1)); paint(); };
-    const c = $('cancelNew'); if (c) c.onclick = () => d.close();
-    $('startNew').onclick = () => {
+    const c = $('cancelNew'); if (c) c.onclick = () => d.close();$('startNew').onclick = () => {
       const players = names.map((n, i) => n.trim() || 'Player ' + (i + 1));
       const now = Date.now();
       const s = { id: 'g' + now, created: now, updated: now, players, rounds: [],
-        target: Math.max(0, parseInt($('tgt').value, 10) || 0), mode: $('mode').value };
+        target: Math.max(0, parseInt($('tgt').value, 10) || 0), mode: 'low' };
       db.sessions.unshift(s); db.currentId = s.id; save(); d.close(); render();
     };
   };
@@ -327,8 +320,7 @@ function openGames() {
 
 /* close dialogs on backdrop tap */
 document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d && cur()) d.close(); }));
-$('addBtn').onclick = () => openRound();
-$('newBtn').onclick = openNew;
+$('addBtn').onclick = () => openRound();$('newBtn').onclick = openNew;
 $('gamesBtn').onclick = openGames;
 
 save();
